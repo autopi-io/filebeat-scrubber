@@ -1,0 +1,30 @@
+# Example Filebeat configuration for log files with multi-line JSON.
+
+filebeat.registry_flush: 5s
+
+filebeat.inputs:
+
+- type: log
+  paths:
+    - tests/json_files/object_*.json
+  close_removed: true
+  clean_removed: true
+  multiline.pattern: ^\{
+  multiline.negate: true
+  multiline.match: after
+  multiline.timeout: 5s
+
+- type: log
+  paths:
+    - tests/json_files/array_*.json
+  close_removed: true
+  clean_removed: true
+  multiline.pattern: ^\[
+  multiline.negate: true
+  multiline.match: after
+  multiline.timeout: 5s
+
+output.console:
+  pretty: true
+
+logging.level: debug
