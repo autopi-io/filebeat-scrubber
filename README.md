@@ -214,7 +214,7 @@ tox
 ```
 
 This will run static code analysis, tests, and packaging. Built packages can be
-found in `dist/`. An HTML report of test covereage can be found in 
+found in `dist/`. An HTML report of test coverage can be found in 
 `reports/htmlcov/index.html`.
 
 ## End to End Testing
