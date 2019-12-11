@@ -64,7 +64,7 @@ $ filebeat_scrubber --help
 
 usage: filebeat_scrubber [-h] [--registry-file REGISTRY_FILE]
                          [--destination TARGET_DIRECTORY] [--move] [--remove]
-                         [--verbose] [--summary] [--input-type TYPES]
+                         [--verbose] [--summary] [--input-type TYPE]
                          [--file-filter FILTER_REGEX]
 
 Process fully harvested files from Filebeat input paths.
@@ -80,11 +80,12 @@ optional arguments:
   --remove              Remove (delete) the fully harvested files.
   --verbose             Verbose output logging.
   --summary             Print summary of I/O operations.
-  --input-type TYPES    Filebeat input "type" to filter fully harvested files
+  --input-type TYPE     Filebeat input "type" to filter fully harvested files
                         on. This argument can be provided multiple times.
   --file-filter FILTER_REGEX
                         Regex to filter fully harvested files with. The filter
-                        is applied to the full path of the file.
+                        is applied to the full path of the file. This argument
+                        can be provided multiple times.
 
 NOTE: This script must be run as a user that has permissions to access the
 Filebeat registry file and any input paths that are configured in Filebeat.

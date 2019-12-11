@@ -65,9 +65,12 @@ class FilebeatScrubberTests(TestCase):
             '.txt$',
         ]
         for test_regex in test_regexes:
-            args.filter_regex = test_regex
+            args.filter_regex = [test_regex]
             data = filebeat_scrubber._read_registry_file(args)
             self.assertEqual(data, registry_1)
+        args.filter_regex = test_regexes
+        data = filebeat_scrubber._read_registry_file(args)
+        self.assertEqual(data, registry_1)
 
     @patch('filebeat_scrubber.filebeat_scrubber.LOGGER.warning')
     @patch('filebeat_scrubber.filebeat_scrubber.os.path.getsize')

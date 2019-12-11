@@ -74,17 +74,19 @@ def _parse_args(args) -> argparse.Namespace:
     parser.add_argument(
         '--input-type',
         action='append',
-        dest="types",
+        dest="type",
         required=False,
         help='Filebeat input "type" to filter fully harvested files on. This '
              'argument can be provided multiple times.')
     parser.add_argument(
         '--file-filter',
         type=_regex,
+        action='append',
         dest="filter_regex",
         required=False,
         help='Regex to filter fully harvested files with. The filter is '
-             'applied to the full path of the file.')
+             'applied to the full path of the file. This argument can be '
+             'provided multiple times.')
     args = parser.parse_args(args)
     if args.move and args.delete:
         LOGGER.error('Files can be moved *or* deleted, not both.')
@@ -130,16 +132,20 @@ def _init_stats() -> Dict:
 def _read_registry_file(args: argparse.Namespace) -> List[Dict]:
     """Read the contents of the registry JSON file.
 
+    This also filters the contents of the registry file based on the provided
+    command line arguments for '--input-type' and '--file-filter'.
+
     :param args: Parsed command line arguments.
-    :return: Contents of the parsed registry JSON file.
+    :return: Contents of the parsed and filtered registry JSON file.
     """
     with open(args.registry_file, 'r') as _registry_file:
         data = json.load(_registry_file)
-    if args.types:
-        data = [entry for entry in data if entry.get('type') in args.types]
+    if args.type:
+        data = [entry for entry in data if entry.get('type') in args.type]
     if args.filter_regex:
-        regex = re.compile(args.filter_regex)
-        data = [entry for entry in data if regex.search(entry['source'])]
+        filter_regexes = [re.compile(regex) for regex in args.filter_regex]
+        data = [entry for entry in data if any(regex.search(entry['source'])
+                                               for regex in filter_regexes)]
     return data
 
 
