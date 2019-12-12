@@ -107,6 +107,7 @@ def generate_file(args: argparse.Namespace):
             json_file,
             indent=args.indent if args.indent else None,
         )
+        json_file.write("\n")
     print("  Done:", path)
 
 

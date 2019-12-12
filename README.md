@@ -46,6 +46,13 @@ in Ruby](https://github.com/andrea-romagnoli/filebeat-cleaner).
 Filebeat Scrubber, written in Python, was inspired by that project and the 
 discussions in that thread.
 
+Note that [Filebeat uses a newline character to detect the end of an event](
+https://www.elastic.co/guide/en/beats/filebeat/master/newline-character-required-eof.html
+). When writing a JSON file to disk, you must ensure that it ends with a 
+newline or else Filebeat will not read the last line in the file. If you do
+not terminate the line with a newline, it could lead to data loss and malformed
+JSON.
+
 # Installation
 
 Before you proceed, it is recommended you setup a [virtual environment](
