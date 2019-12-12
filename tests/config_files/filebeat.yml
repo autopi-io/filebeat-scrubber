@@ -27,4 +27,8 @@ filebeat.inputs:
 output.console:
   pretty: true
 
+# Uncomment to output to local Logstash instance.
+# output.logstash:
+#   hosts: ["127.0.0.1:5044"]
+
 logging.level: debug

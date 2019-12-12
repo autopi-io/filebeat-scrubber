@@ -283,6 +283,30 @@ and only information about what would happen is printed to the console.
 
 Add `--move` or `--remove` if you wish to test the operations for real. 
 
+That should be enough to see Filebeat Scrubber working. You can optionally go
+a step further and see how Logstash would parse such a log. If you do not have 
+Logstash installed, please do so:
+
+```shell script
+sudo apt-get install logstash
+``` 
+
+Edit the Filebeat configuration to enable outputting to Logstash. The sample
+Filebeat configuration has a commented section for this. Comment out the
+output configuration for `console` and uncomment the `logstash` configuration.
+
+Run Logstash with the provided sample Logstash configuration:
+
+```
+/usr/share/logstash/bin/logstash \
+    --path.config tests/config_files/logstash.conf \
+    --path.data tests/sandbox \
+    --log.level info
+```
+
+You should now see any messages posted from Filebeat to Logstash in your
+console. Make sure that there are no JSON parsing errors.
+
 ### Cleanup
 
 Delete files that were created from the testing:
