@@ -65,7 +65,7 @@ $ filebeat_scrubber --help
 usage: filebeat_scrubber [-h] [--registry-file REGISTRY_FILE]
                          [--destination TARGET_DIRECTORY] [--move] [--remove]
                          [--verbose] [--summary] [--input-type TYPE]
-                         [--file-filter FILTER_REGEX]
+                         [--file-filter FILTER_REGEX] [--older-than AGE]
 
 Process fully harvested files from Filebeat input paths.
 
@@ -86,6 +86,9 @@ optional arguments:
                         Regex to filter fully harvested files with. The filter
                         is applied to the full path of the file. This argument
                         can be provided multiple times.
+  --older-than AGE      The minimum age required, in seconds, since the
+                        Filebeat harvester last processed a file before it can
+                        be scrubbed.
 
 NOTE: This script must be run as a user that has permissions to access the
 Filebeat registry file and any input paths that are configured in Filebeat.

@@ -2,6 +2,7 @@
 
 """Filebeat Scrubber tests."""
 
+import datetime
 import logging
 from argparse import Namespace, ArgumentTypeError
 from unittest import TestCase
@@ -10,12 +11,16 @@ from unittest.mock import patch
 from filebeat_scrubber import filebeat_scrubber
 
 
-class FilebeatScrubberTests(TestCase):
-    """Test the functionality of the Filebeat Scrubber."""
+class BaseTestCase(TestCase):
+    """Common base test class."""
 
     @classmethod
     def setUpClass(cls) -> None:
         filebeat_scrubber.LOGGER.setLevel(logging.ERROR)  # Shh...
+
+
+class FilebeatScrubberTests(BaseTestCase):
+    """Test core methods of the Filebeat Scrubber."""
 
     @patch('filebeat_scrubber.filebeat_scrubber.LOGGER.info')
     def test_print_args_summary(self, mock_info):
@@ -33,29 +38,56 @@ class FilebeatScrubberTests(TestCase):
             'count_partial': 0,
         })
 
-    def test_read_registry_file(self):
+    def test_get_utc_now(self):
+        """Should be able to get the current time in UTC."""
+        now = filebeat_scrubber._get_utc_now()
+        self.assertTrue(isinstance(now, datetime.datetime))
+        self.assertAlmostEqual(now, datetime.datetime.utcnow(),
+                               delta=datetime.timedelta(seconds=10))
+
+    @patch('filebeat_scrubber.filebeat_scrubber._get_utc_now')
+    def test_get_age(self, mock_utc_now):
+        """Age of a source file should be retrievable."""
+        mock_utc_now.return_value = datetime.datetime(2019, 12, 11, 19, 0, 0, 0)
+        age = filebeat_scrubber._get_age('2019-12-11T18:55:00.000000Z')
+        self.assertEqual(age, 300)
+        age = filebeat_scrubber._get_age('2019-12-11T18:50:00.000000Z')
+        self.assertEqual(age, 600)
+
+    @patch('filebeat_scrubber.filebeat_scrubber._get_age')
+    def test_read_registry_file(self, mock_get_age):
         """A registry file should be readable as JSON."""
         registry_1 = [{
+            "timestamp": '2019-12-11T19:00:00.000000Z',
             "type": "type_1",
             "source": "log_1.txt",
             "offset": 123
+        }, {
+            "timestamp": '2019-12-11T19:30:00.000000Z',
+            "type": "type_2",
+            "source": "log_2.txt",
+            "offset": 321
         }]
         args = Namespace(
             registry_file='tests/registry_files/registry_1.json',
-            types=[],
+            type=[],
+            age=0,
             filter_regex=None)
+
+        # Read data as-is.
         data = filebeat_scrubber._read_registry_file(args)
         self.assertEqual(data, registry_1)
 
-        args.types = ['type_1']
+        # Apply type filtering.
+        args.type = ['type_1']
         data = filebeat_scrubber._read_registry_file(args)
-        self.assertEqual(data, registry_1)
-
-        args.types = ['type_2']
+        self.assertEqual(data, [registry_1[0]])
+        args.type = ['type_2']
         data = filebeat_scrubber._read_registry_file(args)
-        self.assertEqual(data, [])
+        self.assertEqual(data, [registry_1[1]])
 
-        args.types = ['type_1']
+        # Apply regex filtering.
+        args.type = ['type_1']
         test_regexes = [
             '^log_1.txt$',
             'log_1.txt',
@@ -67,8 +99,20 @@ class FilebeatScrubberTests(TestCase):
         for test_regex in test_regexes:
             args.filter_regex = [test_regex]
             data = filebeat_scrubber._read_registry_file(args)
-            self.assertEqual(data, registry_1)
+            self.assertEqual(data, [registry_1[0]])
         args.filter_regex = test_regexes
+        data = filebeat_scrubber._read_registry_file(args)
+        self.assertEqual(data, [registry_1[0]])
+        args.type = []
+        data = filebeat_scrubber._read_registry_file(args)
+        self.assertEqual(data, registry_1)
+
+        # Apply age filtering.
+        mock_get_age.return_value = 50
+        args.age = 100
+        data = filebeat_scrubber._read_registry_file(args)
+        self.assertEqual(data, [])
+        args.age = 25
         data = filebeat_scrubber._read_registry_file(args)
         self.assertEqual(data, registry_1)
 
@@ -204,6 +248,10 @@ class FilebeatScrubberTests(TestCase):
         filebeat_scrubber._regex("^valid$")
         with self.assertRaises(ArgumentTypeError):
             filebeat_scrubber._regex("^(invalid$")
+
+
+class FilebeatScrubberMainTests(BaseTestCase):
+    """Test the main method of the Filebeat Scrubber."""
 
     @patch('filebeat_scrubber.filebeat_scrubber.LOGGER.fatal')
     @patch('filebeat_scrubber.filebeat_scrubber._print_summary')

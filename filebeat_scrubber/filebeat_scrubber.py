@@ -3,6 +3,7 @@
 """Filebeat Scrubber."""
 
 import argparse
+import datetime
 import json
 import logging
 import os
@@ -87,6 +88,13 @@ def _parse_args(args) -> argparse.Namespace:
         help='Regex to filter fully harvested files with. The filter is '
              'applied to the full path of the file. This argument can be '
              'provided multiple times.')
+    parser.add_argument(
+        "--older-than",
+        type=int,
+        dest="age",
+        default=0,
+        help="The minimum age required, in seconds, since the Filebeat "
+             "harvester last processed a file before it can be scrubbed.")
     args = parser.parse_args(args)
     if args.move and args.delete:
         LOGGER.error('Files can be moved *or* deleted, not both.')
@@ -129,11 +137,28 @@ def _init_stats() -> Dict:
     }
 
 
+def _get_utc_now() -> datetime.datetime:
+    """Get the current time in UTC format."""
+    return datetime.datetime.utcnow()
+
+
+def _get_age(timestamp: str):
+    """Get the elapsed time since the provided timestamp.
+
+    :param timestamp: A timestamp in ISO 8601 format.
+    :return: The amount of time elapsed, in seconds.
+    """
+    now = _get_utc_now()
+    date_object = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
+    return (now - date_object).total_seconds()
+
+
 def _read_registry_file(args: argparse.Namespace) -> List[Dict]:
     """Read the contents of the registry JSON file.
 
     This also filters the contents of the registry file based on the provided
-    command line arguments for '--input-type' and '--file-filter'.
+    command line arguments for '--input-type', '--file-filter', and
+    '--older-than'.
 
     :param args: Parsed command line arguments.
     :return: Contents of the parsed and filtered registry JSON file.
@@ -142,6 +167,9 @@ def _read_registry_file(args: argparse.Namespace) -> List[Dict]:
         data = json.load(_registry_file)
     if args.type:
         data = [entry for entry in data if entry.get('type') in args.type]
+    if args.age:
+        data = [entry for entry in data
+                if _get_age(entry['timestamp']) >= args.age]
     if args.filter_regex:
         filter_regexes = [re.compile(regex) for regex in args.filter_regex]
         data = [entry for entry in data if any(regex.search(entry['source'])

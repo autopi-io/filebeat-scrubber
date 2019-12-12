@@ -1,7 +1,14 @@
 [
   {
+    "timestamp": "2019-12-11T19:00:00.000000Z",
     "type": "type_1",
     "source": "log_1.txt",
     "offset": 123
+  },
+  {
+    "timestamp": "2019-12-11T19:30:00.000000Z",
+    "type": "type_2",
+    "source": "log_2.txt",
+    "offset": 321
   }
 ]
