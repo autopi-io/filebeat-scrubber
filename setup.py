@@ -7,7 +7,7 @@ with open("README.md", "r") as readme_file:
 
 setuptools.setup(
     name="filebeat-scrubber",
-    version="1.1.0",
+    version="1.2.0",
     author="barqshasbite",
     description="Filebeat Scrubber performs operations on files that Filebeat "
                 "has fully harvested.",
