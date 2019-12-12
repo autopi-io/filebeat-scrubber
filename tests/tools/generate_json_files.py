@@ -50,6 +50,13 @@ def _parse_args() -> argparse.Namespace:
         default="tests/json_files",
         help="Directory to generate JSON files in.",
     )
+    parser.add_argument(
+        "--file-prefix",
+        type=str,
+        dest="file_prefix",
+        default='',
+        help="Prefix to apply to random file names.",
+    )
     return parser.parse_args()
 
 
@@ -92,8 +99,7 @@ def generate_file(args: argparse.Namespace):
         },
     }
     os.makedirs(args.target_directory, exist_ok=True)
-    prefix = "array" if args.as_array else "object"
-    filename = "{}_{}.json".format(prefix, object_id)
+    filename = "{}{}.json".format(args.file_prefix, object_id)
     path = os.path.join(args.target_directory, filename)
     with open(path, "w") as json_file:
         json.dump(

@@ -256,6 +256,7 @@ python tests/tools/generate_json_files.py \
     --number 1000 \
     --delay 10 \
     --indent 4 \
+    --file-prefix object_ \
     --destination tests/json_files
 ```
 
