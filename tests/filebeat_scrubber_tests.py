@@ -51,7 +51,7 @@ class FilebeatScrubberTests(BaseTestCase):
         mock_utc_now.return_value = datetime.datetime(2019, 12, 11, 19, 0, 0, 0)
         age = filebeat_scrubber._get_age('2019-12-11T18:55:00.000000Z')
         self.assertEqual(age, 300)
-        age = filebeat_scrubber._get_age('2019-12-11T18:50:00.000000Z')
+        age = filebeat_scrubber._get_age('2019-12-11T18:50:00.000000000Z')
         self.assertEqual(age, 600)
 
     @patch('filebeat_scrubber.filebeat_scrubber._get_age')
@@ -63,7 +63,7 @@ class FilebeatScrubberTests(BaseTestCase):
             "source": "log_1.txt",
             "offset": 123
         }, {
-            "timestamp": '2019-12-11T19:30:00.000000Z',
+            "timestamp": '2019-12-11T19:30:00.000000000Z',
             "type": "type_2",
             "source": "log_2.txt",
             "offset": 321

@@ -6,7 +6,7 @@
     "offset": 123
   },
   {
-    "timestamp": "2019-12-11T19:30:00.000000Z",
+    "timestamp": "2019-12-11T19:30:00.000000000Z",
     "type": "type_2",
     "source": "log_2.txt",
     "offset": 321

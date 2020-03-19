@@ -149,7 +149,15 @@ def _get_age(timestamp: str):
     :return: The amount of time elapsed, in seconds.
     """
     now = _get_utc_now()
-    date_object = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
+    try:
+        date_object = datetime.datetime.strptime(
+            timestamp,
+            "%Y-%m-%dT%H:%M:%S.%fZ")
+    except ValueError:
+        # Truncate nanoseconds.
+        date_object = datetime.datetime.strptime(
+            timestamp[:-4],
+            "%Y-%m-%dT%H:%M:%S.%f")
     return (now - date_object).total_seconds()
 
 
