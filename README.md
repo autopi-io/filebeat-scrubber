@@ -228,6 +228,22 @@ This will run static code analysis, tests, and packaging. Built packages can be
 found in `dist/`. An HTML report of test coverage can be found in 
 `reports/htmlcov/index.html`.
 
+## Publishing a release to PyPI
+
+Update the version of the release in `setup.py`.
+
+Build the latest version of the project:
+
+```shell script
+tox
+```
+
+Publish the release with `twine`:
+
+```shell script
+twine upload dist/filebeat_scrubber-X.Y.Z-py3-none-any.whl
+```
+
 ## End to End Testing
 
 Install the current source code of Filebeat Scubber into your [virtual
