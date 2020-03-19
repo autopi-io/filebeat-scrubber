@@ -19,9 +19,11 @@ def _setup_logger() -> logging.Logger:
     log_format = '[%(asctime)s][%(levelname)s] %(message)s'
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(logging.Formatter(log_format))
+    stream_handler.setLevel(logging.INFO)
     custom_logger = logging.getLogger(__name__)
     custom_logger.addHandler(stream_handler)
     custom_logger.setLevel(logging.INFO)
+    custom_logger.propagate = False
     return custom_logger
 
 
