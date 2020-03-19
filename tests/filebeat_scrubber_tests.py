@@ -404,7 +404,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
-            'offset': 99,
+            'offset': 100,
             'source': 'mocked source'
         }]
         mock_size.return_value = 100
@@ -438,7 +438,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
-            'offset': 99,
+            'offset': 100,
             'source': 'mocked source'
         }]
         mock_size.return_value = 100
@@ -473,7 +473,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
-            'offset': 99,
+            'offset': 100,
             'source': 'mocked source'
         }]
         mock_size.return_value = 100

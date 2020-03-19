@@ -296,7 +296,7 @@ def main():
             source_size = _get_file_size(args, stats, input_data)
             if source_size is None:
                 continue
-            if input_data['offset'] + 1 == source_size:
+            if input_data['offset'] == source_size:
                 if args.move:
                     _move_file(args, input_data['source'])
                 elif args.delete:
