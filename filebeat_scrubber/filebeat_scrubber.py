@@ -11,6 +11,7 @@ import re
 import shutil
 import sre_compile
 import sys
+import time
 from typing import Dict, List, Optional
 
 
@@ -97,6 +98,14 @@ def _parse_args(args) -> argparse.Namespace:
         default=0,
         help="The minimum age required, in seconds, since the Filebeat "
              "harvester last processed a file before it can be scrubbed.")
+    parser.add_argument(
+        "--interval",
+        type=int,
+        dest="interval",
+        default=0,
+        help="The interval to run Filebeat Scrubber with. If specified, "
+             "Filebeat Scrubber will run indefinitely at the configured "
+             "interval instead of running once and closing.")
     args = parser.parse_args(args)
     if args.move and args.delete:
         LOGGER.error('Files can be moved *or* deleted, not both.')
@@ -284,12 +293,12 @@ def _increment_scrubbed(stats):
     stats['count_scrubbed'] += 1
 
 
-def main():
-    """Scrub fully harvested files."""
-    args = _parse_args(sys.argv[1:])
-    if args.verbose:
-        _print_args_summary(args)
-    stats = _init_stats()
+def scrub(args: argparse.Namespace, stats: Dict):
+    """Scrub files form registry that are fully harvested.
+
+    :param args: Command line arguments.
+    :param stats: Stats dictionary.
+    """
     if os.path.exists(args.registry_file):
         registry_data = _read_registry_file(args)
         for input_data in registry_data:
@@ -311,5 +320,21 @@ def main():
     else:
         LOGGER.fatal('Registry file missing. Filebeat may not have created it '
                      'yet, or you do not have permission to access it.')
+
+
+def main():
+    """Scrub fully harvested files."""
+    args = _parse_args(sys.argv[1:])
+    if args.verbose:
+        _print_args_summary(args)
+    stats = _init_stats()
+    scrub(args, stats)
+    if args.interval > 0:
+        try:
+            while True:
+                time.sleep(args.interval)
+                scrub(args, stats)
+        except KeyboardInterrupt:
+            pass
     if args.show_summary:
         _print_summary(args, stats)

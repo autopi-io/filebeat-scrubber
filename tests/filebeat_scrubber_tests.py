@@ -274,6 +274,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
             verbose=False,
             registry_file=False,
             show_summary=False,
+            interval=0,
         )
         mock_exists.return_value = False
         filebeat_scrubber.main()
@@ -308,6 +309,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
             verbose=True,
             registry_file=False,
             show_summary=True,
+            interval=0,
         )
         mock_exists.return_value = False
         filebeat_scrubber.main()
@@ -336,6 +338,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
             verbose=True,
             registry_file=False,
             show_summary=True,
+            interval=0,
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
@@ -368,6 +371,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
             verbose=True,
             registry_file=False,
             show_summary=True,
+            interval=0,
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
@@ -401,6 +405,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
             verbose=True,
             registry_file=False,
             show_summary=True,
+            interval=0,
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
@@ -435,6 +440,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
             verbose=True,
             registry_file=False,
             show_summary=True,
+            interval=0,
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
@@ -470,6 +476,7 @@ class FilebeatScrubberMainTests(BaseTestCase):
             verbose=True,
             registry_file=False,
             show_summary=True,
+            interval=0,
         )
         mock_exists.return_value = True
         mock_registry.return_value = [{
@@ -484,3 +491,42 @@ class FilebeatScrubberMainTests(BaseTestCase):
         self.assertTrue(mock_summary.called)
         self.assertTrue(mock_increment.called)
         self.assertTrue(mock_info.called)
+
+    @patch('filebeat_scrubber.filebeat_scrubber.scrub')
+    @patch('filebeat_scrubber.filebeat_scrubber._increment_scrubbed')
+    @patch('filebeat_scrubber.filebeat_scrubber.LOGGER.info')
+    @patch('filebeat_scrubber.filebeat_scrubber._print_summary')
+    @patch('filebeat_scrubber.filebeat_scrubber._partial_read_stats')
+    @patch('filebeat_scrubber.filebeat_scrubber._delete_file')
+    @patch('filebeat_scrubber.filebeat_scrubber._move_file')
+    @patch('filebeat_scrubber.filebeat_scrubber._get_file_size')
+    @patch('filebeat_scrubber.filebeat_scrubber._read_registry_file')
+    @patch('filebeat_scrubber.filebeat_scrubber.os.path.exists')
+    @patch('filebeat_scrubber.filebeat_scrubber._parse_args')
+    def test_main_8(self, mock_args, mock_exists, mock_registry, mock_size,
+                    mock_move, mock_delete, mock_partial, mock_summary,
+                    mock_info, mock_increment, mock_scrub):
+        """Filebeat Scrubber should operate nominally."""
+        mock_args.return_value = Namespace(
+            move=False,
+            delete=False,
+            verbose=True,
+            registry_file=False,
+            show_summary=True,
+            interval=0.1,
+        )
+        mock_exists.return_value = True
+        mock_registry.return_value = [{
+            'offset': 100,
+            'source': 'mocked source'
+        }]
+        mock_scrub.side_effect = [True, True, KeyboardInterrupt]
+        mock_size.return_value = 100
+        filebeat_scrubber.main()
+        self.assertFalse(mock_move.called)
+        self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_partial.called)
+        self.assertTrue(mock_summary.called)
+        self.assertFalse(mock_increment.called)
+        self.assertTrue(mock_info.called)
+        self.assertEqual(mock_scrub.call_count, 3)

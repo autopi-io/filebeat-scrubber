@@ -73,6 +73,7 @@ usage: filebeat_scrubber [-h] [--registry-file REGISTRY_FILE]
                          [--destination TARGET_DIRECTORY] [--move] [--remove]
                          [--verbose] [--summary] [--input-type TYPE]
                          [--file-filter FILTER_REGEX] [--older-than AGE]
+                         [--interval INTERVAL]
 
 Process fully harvested files from Filebeat input paths.
 
@@ -96,6 +97,10 @@ optional arguments:
   --older-than AGE      The minimum age required, in seconds, since the
                         Filebeat harvester last processed a file before it can
                         be scrubbed.
+  --interval INTERVAL   The interval to run Filebeat Scrubber with. If
+                        specified, Filebeat Scrubber will run indefinitely at
+                        the configured interval instead of running once and
+                        closing.
 
 NOTE: This script must be run as a user that has permissions to access the
 Filebeat registry file and any input paths that are configured in Filebeat.
