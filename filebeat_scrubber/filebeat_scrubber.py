@@ -46,6 +46,12 @@ def _parse_args(args) -> argparse.Namespace:
         help='Full path to the Filebeat registry file. '
              'Default: "/var/lib/filebeat/registry"')
     parser.add_argument(
+        '--registry-7x',
+        dest='registry_7x',
+        action='store_true',
+        default=False,
+        help='Is filebeat\'s new registry used? (filebeat v7.x and up).')
+    parser.add_argument(
         '--destination',
         type=str,
         dest="target_directory",
@@ -172,6 +178,20 @@ def _get_age(timestamp: str):
     return (now - date_object).total_seconds()
 
 
+def _get_age_7x(registry_timestamp: List[int]) -> float:
+    """Get the elapsed time in seconds since the
+    provided timestamp. This function is based on the new
+    timestamp provided in filebeat's registry file since v7.0
+
+    :param registry_timestamp: A timestamp list of ints [nanoseconds, seconds].
+    :return: The amount of time elapsed, in seconds.
+    """
+    now = _get_utc_now()
+    timestamp = float("{}.{}".format(registry_timestamp[1], registry_timestamp[0]))
+    date_object = datetime.datetime.fromtimestamp(timestamp)
+    return (now - date_object).total_seconds()
+
+
 def _read_registry_file(args: argparse.Namespace) -> List[Dict]:
     """Read the contents of the registry JSON file.
 
@@ -187,8 +207,12 @@ def _read_registry_file(args: argparse.Namespace) -> List[Dict]:
     if args.type:
         data = [entry for entry in data if entry.get('type') in args.type]
     if args.age:
-        data = [entry for entry in data
-                if _get_age(entry['timestamp']) >= args.age]
+        if args.registry_7x:
+            data = [entry for entry in data
+                    if _get_age_7x(entry['timestamp']) >= args.age]
+        else:
+            data = [entry for entry in data
+                    if _get_age(entry['timestamp']) >= args.age]
     if args.filter_regex:
         filter_regexes = [re.compile(regex) for regex in args.filter_regex]
         data = [entry for entry in data if any(regex.search(entry['source'])
