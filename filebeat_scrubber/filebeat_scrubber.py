@@ -42,15 +42,14 @@ def _parse_args(args) -> argparse.Namespace:
         '--registry-file',
         type=str,
         dest="registry_file",
-        default='/var/lib/filebeat/registry',
         help='Full path to the Filebeat registry file. '
-             'Default: "/var/lib/filebeat/registry"')
+             'Only applicable for Filebeat versions prior to 7.0.')
     parser.add_argument(
-        '--registry-7x',
-        dest='registry_7x',
-        action='store_true',
-        default=False,
-        help='Is filebeat\'s new registry used? (filebeat v7.x and up).')
+        '--registry-folder',
+        type=str,
+        dest='registry_folder',
+        help='Full path to the Filebeat registry folder. '
+             'Only applicable for Filebeat version 7.0 and older.')
     parser.add_argument(
         '--destination',
         type=str,
@@ -116,6 +115,12 @@ def _parse_args(args) -> argparse.Namespace:
     if args.move and args.delete:
         LOGGER.error('Files can be moved *or* deleted, not both.')
         sys.exit(1)
+
+    # not xor
+    if not ((args.registry_file or args.registry_folder) and not (args.registry_file and args.registry_folder)):
+        LOGGER.error('You must specify one of registry-file or registry-folder, but not both.')
+        sys.exit(1)
+
     return args
 
 
@@ -207,7 +212,8 @@ def _read_registry_file(args: argparse.Namespace) -> List[Dict]:
     if args.type:
         data = [entry for entry in data if entry.get('type') in args.type]
     if args.age:
-        if args.registry_7x:
+        if args.registry_folder:
+            # uses new registry
             data = [entry for entry in data
                     if _get_age_7x(entry['timestamp']) >= args.age]
         else:
@@ -349,6 +355,18 @@ def scrub(args: argparse.Namespace, stats: Dict):
 def main():
     """Scrub fully harvested files."""
     args = _parse_args(sys.argv[1:])
+
+    if args.registry_file == None:
+        LOGGER.info('Did not receive a registry-file argument, automatically assigning that.')
+        active_dat_file = os.path.join(args.registry_folder, 'active.dat')
+        if os.path.exists(active_dat_file):
+            with open(active_dat_file) as _active_dat_file:
+                args.registry_file = os.path.join(args.registry_folder, _active_dat_file.read())
+        else:
+            LOGGER.fatal('active.dat file was not found. Make sure that you are using '
+                         'Filebeat version>=7.0 or specify the registry file '
+                         'directly.')
+
     if args.verbose:
         _print_args_summary(args)
     stats = _init_stats()
