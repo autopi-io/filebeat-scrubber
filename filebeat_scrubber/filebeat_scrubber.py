@@ -108,9 +108,9 @@ def _parse_args(args) -> argparse.Namespace:
         type=int,
         dest="interval",
         default=0,
-        help="The interval to run Filebeat Scrubber with. If specified, "
-             "Filebeat Scrubber will run indefinitely at the configured "
-             "interval instead of running once and closing.")
+        help="The interval in seconds to run Filebeat Scrubber with. "
+            "If specified, Filebeat Scrubber will run indefinitely at "
+            "the configured interval instead of running once and closing.")
     args = parser.parse_args(args)
     if args.move and args.delete:
         LOGGER.error('Files can be moved *or* deleted, not both.')
@@ -323,6 +323,24 @@ def _increment_scrubbed(stats):
     stats['count_scrubbed'] += 1
 
 
+def _get_active_registry_file(args: argparse.Namespace) -> str:
+    """Fetch the active registry file's name based on active.dat file in
+    Filebeat >= 7.0 registry folder.
+
+    :param args: Parsed command line arguments.
+    :return: The full path to the active registry file.
+    """
+    active_dat_file = os.path.join(args.registry_folder, 'active.dat')
+    if os.path.exists(active_dat_file):
+        with open(active_dat_file) as _active_dat_file:
+            return os.path.join(args.registry_folder, _active_dat_file.read())
+    else:
+        LOGGER.fatal('active.dat file was not found. Make sure that you are using '
+                        'Filebeat version >= 7.0 or specify the registry file '
+                        'directly.')
+        sys.exit(1)
+
+
 def scrub(args: argparse.Namespace, stats: Dict):
     """Scrub files form registry that are fully harvested.
 
@@ -356,27 +374,31 @@ def main():
     """Scrub fully harvested files."""
     args = _parse_args(sys.argv[1:])
 
-    if args.registry_file == None:
-        LOGGER.info('Did not receive a registry-file argument, automatically assigning that.')
-        active_dat_file = os.path.join(args.registry_folder, 'active.dat')
-        if os.path.exists(active_dat_file):
-            with open(active_dat_file) as _active_dat_file:
-                args.registry_file = os.path.join(args.registry_folder, _active_dat_file.read())
-        else:
-            LOGGER.fatal('active.dat file was not found. Make sure that you are using '
-                         'Filebeat version>=7.0 or specify the registry file '
-                         'directly.')
+    if args.registry_folder:
+        LOGGER.info('Received a registry folder arg, automatically determine registry file.')
+        args.registry_file = _get_active_registry_file(args)
 
     if args.verbose:
         _print_args_summary(args)
     stats = _init_stats()
     scrub(args, stats)
+    if args.show_summary:
+        _print_summary(args, stats)
+
     if args.interval > 0:
         try:
             while True:
+                LOGGER.info('Sleeping for {}s'.format(args.interval))
                 time.sleep(args.interval)
+
+                if args.registry_folder:
+                    # ensure registry_file is the one that's active
+                    args.registry_file = _get_active_registry_file(args)
+                # get new stats
+                stats = _init_stats()
+
                 scrub(args, stats)
+                if args.show_summary:
+                    _print_summary(args, stats)
         except KeyboardInterrupt:
             pass
-    if args.show_summary:
-        _print_summary(args, stats)
