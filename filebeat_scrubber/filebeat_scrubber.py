@@ -338,7 +338,6 @@ def _get_active_registry_file(args: argparse.Namespace) -> str:
         LOGGER.fatal('active.dat file was not found. Make sure that you are using '
                         'Filebeat version >= 7.0 or specify the registry file '
                         'directly.')
-        sys.exit(1)
 
 
 def scrub(args: argparse.Namespace, stats: Dict):
@@ -381,7 +380,11 @@ def main():
     if args.verbose:
         _print_args_summary(args)
     stats = _init_stats()
-    scrub(args, stats)
+
+    # only run scrub if there is a registry_file
+    if args.registry_file:
+        scrub(args, stats)
+
     if args.show_summary:
         _print_summary(args, stats)
 
@@ -397,7 +400,9 @@ def main():
                 # get new stats
                 stats = _init_stats()
 
-                scrub(args, stats)
+                if args.registry_file:
+                    scrub(args, stats)
+
                 if args.show_summary:
                     _print_summary(args, stats)
         except KeyboardInterrupt:
