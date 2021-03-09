@@ -192,7 +192,7 @@ def _get_age_7x(registry_timestamp: List[int]) -> float:
     :return: The amount of time elapsed, in seconds.
     """
     now = _get_utc_now()
-    timestamp = float("{}.{}".format(registry_timestamp[1], registry_timestamp[0]))
+    timestamp = float("{}.{}".format(int(registry_timestamp[1]), int(registry_timestamp[0])))
     date_object = datetime.datetime.fromtimestamp(timestamp)
     return (now - date_object).total_seconds()
 
